@@ -15,7 +15,7 @@ except ImportError:
 from traceback import format_exc
 from flask import (Flask, abort, make_response, render_template, request,
     safe_join, send_from_directory, url_for)
-from .constants import default_filenames
+from .constants import default_filenames, supported_extensions 
 from .renderer import render_content
 from . import __version__
 
@@ -111,6 +111,13 @@ def create_app(path=None, gfm=False, context=None,
             filename = safe_join(os.path.dirname(in_filename), filename)
             if os.path.isdir(filename):
                 filename = _find_file_or_404(filename, force_resolve)
+            elif not os.path.exists(filename) and os.path.splitext(filename)[1] == '':
+                # try supported extensions if the file extension wasn't provided.
+                for ext in supported_extensions:
+                    if not os.path.exists(filename + ext): continue
+                    filename += ext
+                    break
+
             # Read and serve images as binary
             mimetype, _ = mimetypes.guess_type(filename)
             if mimetype and mimetype.startswith('image/'):
